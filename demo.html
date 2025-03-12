@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-scale, initial-scale=1.0">
+    <title>Checkout - Payment Demo</title>
+    <script src="https://pay.google.com/gp/p/js/pay.js" async></script>
+    <script src="https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js" async></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+            flex-direction: column;
+        }
+        #checkout-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            text-align: center;
+            max-width: 100%;
+        }
+
+        /* Modern Logo Style */
+        #brand-name {
+            font-size: 40px;
+            font-weight: 700;
+            color: #4285f4;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            position: relative;
+        }
+
+        #brand-name::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #4285f4;
+            border-radius: 5px;
+        }
+
+        /* Store Name Under Brand */
+        #store-name {
+            font-size: 18px;
+            color: #666;
+            margin-top: 5px;
+            font-weight: 400;
+        }
+
+        h2 {
+            margin-bottom: 25px;
+            font-size: 28px;
+            color: #333;
+        }
+        .product {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            font-size: 16px;
+            color: #555;
+        }
+        .product span {
+            display: inline-block;
+        }
+        #total {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #333;
+        }
+        .pay-button {
+            margin: 15px 0;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+        }
+        #google-pay-button {
+            background-color: #4285f4;
+            color: white;
+            text-align: center;
+        }
+        #google-pay-button.disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+        #apple-pay-button {
+            background-color: #000000;
+            color: white;
+        }
+        #coming-soon {
+            color: #888;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        #bitcoin-pay {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        #bitcoin-pay h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+        #qrcode {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+        }
+        .pay-button:hover {
+            opacity: 0.9;
+        }
+
+        /* Copyright and Disclaimer Section */
+        #footer {
+            font-size: 14px;
+            color: #888;
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        #footer a {
+            color: #4285f4;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="checkout-container">
+        <!-- Brand Name Section with Modern Look -->
+        <div id="brand-name">SCheck</div>  <!-- Brand name set to SCheck -->
+        
+        <!-- Store Name Below Brand -->
+        <div id="store-name">Demo Merchant</div> <!-- Store name under the brand -->
+
+        <h2>Checkout</h2>
+        <div id="product-list">
+            <div class="product"><span>Item 1</span><span>$5.00</span></div>
+            <div class="product"><span>Item 2</span><span>$3.50</span></div>
+            <div class="product"><span>Item 3</span><span>$6.50</span></div>
+        </div>
+        <div id="total">Total: $15.00</div>
+
+        <!-- Google Pay Button (Coming Soon, Disabled) -->
+        <div id="google-pay-button" class="pay-button disabled">
+            <span id="coming-soon">Google Pay - Coming Soon</span>
+        </div>
+
+        <!-- Apple Pay Button -->
+        <div id="apple-pay-button" class="pay-button">Apple Pay - Coming Soon</div>
+
+        <!-- Bitcoin Payment Section -->
+        <div id="bitcoin-pay" class="pay-button">
+            <h3>Pay with Bitcoin</h3>
+            <p>Scan the QR code to pay with Bitcoin</p>
+            <div id="qrcode"></div>
+        </div>
+   <p>This is just a DEMO</p>
+    </div>
+
+    <!-- Footer Section with Copyright and Disclaimer -->
+    <div id="footer">
+        <p>&copy; 2025 SCheck. All rights reserved.</p>
+        <p>Making misleading content is prohibited. <a href="https://www.example.com/terms">Read our terms of service.</a></p>
+    </div>
+
+    <script>
+        // Google Pay Setup (coming soon message only)
+        function onGooglePayLoaded() {
+            const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'TEST' });
+
+            const paymentRequest = {
+                apiVersion: 2,
+                apiVersionMinor: 0,
+                allowedPaymentMethods: [
+                    {
+                        type: 'CARD',
+                        parameters: {
+                            allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+                            allowedCardNetworks: ['MASTERCARD', 'VISA']
+                        },
+                        tokenizationSpecification: {
+                            type: 'PAYMENT_GATEWAY',
+                            parameters: {
+                                'gateway': 'example',
+                                'gatewayMerchantId': 'exampleMerchantId'
+                            }
+                        }
+                    }
+                ],
+                transactionInfo: {
+                    totalPriceStatus: 'FINAL',
+                    totalPrice: '15.00',
+                    currencyCode: 'USD'
+                }
+            };
+
+            const button = paymentsClient.createButton({
+                onClick: function() {
+                    paymentsClient.loadPaymentData(paymentRequest).then(function(paymentData) {
+                        console.log('Google Pay Payment Data:', paymentData);
+                    }).catch(function(err) {
+                        console.error('Google Pay error:', err);
+                    });
+                }
+            });
+
+            // The button is disabled and won't be appended
+            // document.getElementById('google-pay-button').appendChild(button);
+        }
+
+        // Apple Pay Setup
+        function setupApplePay() {
+            if (window.ApplePaySession && ApplePaySession.canMakePayments()) {
+                const button = document.createElement('button');
+                button.innerText = 'Pay with Apple Pay';
+                button.onclick = () => {
+                    const paymentRequest = {
+                        countryCode: 'US',
+                        currencyCode: 'USD',
+                        total: {
+                            label: 'Demo Store',
+                            amount: '15.00'
+                        }
+                    };
+
+                    const session = new ApplePaySession(1, paymentRequest);
+
+                    session.onvalidatemerchant = function(event) {
+                        const validationURL = event.validationURL;
+                        fetch('/validate-merchant', {
+                            method: 'POST',
+                            body: JSON.stringify({ validationURL }),
+                            headers: { 'Content-Type': 'application/json' }
+                        })
+                        .then(response => response.json())
+                        .then(merchantSession => session.completeMerchantValidation(merchantSession));
+                    };
+
+                    session.onpaymentauthorized = function(event) {
+                        const payment = event.payment;
+                        console.log('Apple Pay Payment Authorized:', payment);
+                        session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                    };
+
+                    session.begin();
+                };
+
+                document.getElementById('apple-pay-button').appendChild(button);
+            }
+        }
+
+        // Bitcoin Payment Setup
+        function setupBitcoinPay() {
+            const btcAddress = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"; // Example Bitcoin address
+            const amount = "0.00035"; // Example amount for Bitcoin transaction
+
+            // List of items the user ordered
+            const itemsOrdered = [
+                "Item 1: $5.00",
+                "Item 2: $3.50",
+                "Item 3: $6.50"
+            ];
+
+            // Create the message containing the ordered items
+            const orderMessage = "Ordered Items: " + itemsOrdered.join(", ") + " | Total: $15.00";
+
+            // Bitcoin URI format with the message
+            const btcURI = `bitcoin:${btcAddress}?amount=${amount}&message=${encodeURIComponent(orderMessage)}`;
+
+            // Generate the QR code with the payment info and custom message
+            const qrCodeContainer = document.getElementById("qrcode");
+            qrCodeContainer.innerHTML = ""; // Clear previous QR code
+            new QRCode(qrCodeContainer, {
+                text: btcURI,
+                width: 200,
+                height: 200
+            });
+
+            // Log the URI to the console (for debugging)
+            console.log("Generated Bitcoin URI:", btcURI);
+        }
+
+        // Load all payment options on window load
+        window.onload = () => {
+            if (window.google && google.payments) onGooglePayLoaded();
+            setupApplePay();
+            setupBitcoinPay();
+        };
+    </script>
+</body>
+</html>
